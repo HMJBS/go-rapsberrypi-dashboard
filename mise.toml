@@ -1,8 +1,8 @@
 [tools]
-go = "latest"
+go = "1.26.1"
 
 # Optional but recommended for consistent linting across machines/CI.
-golangci-lint = "latest"
+golangci-lint = "2.11.1"
 
 # Formatter/import organizer used by VS Code and pre-commit.
 "go:golang.org/x/tools/cmd/goimports" = "latest"
