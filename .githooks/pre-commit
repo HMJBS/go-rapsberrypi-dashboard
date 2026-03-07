@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Only run when Go-related files are staged.
+staged_go_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.go$' || true)
+staged_go_mod_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(go\.mod|go\.sum)$' || true)
+
+if [[ -z "${staged_go_files}" && -z "${staged_go_mod_files}" ]]; then
+  exit 0
+fi
+
+# Format
+if [[ -n "${staged_go_files}" ]]; then
+  printf '%s\n' "${staged_go_files}" | xargs -r gofmt -w
+
+  if command -v goimports >/dev/null 2>&1; then
+    printf '%s\n' "${staged_go_files}" | xargs -r goimports -w
+  fi
+
+  # Re-stage (gofmt/goimports may have modified files)
+  printf '%s\n' "${staged_go_files}" | xargs -r git add
+fi
+
+# Lint (workspace-level for cross-package correctness)
+if command -v golangci-lint >/dev/null 2>&1; then
+  golangci-lint run ./...
+else
+  echo "golangci-lint not found; skipping lint. Install it (e.g. via mise) for full checks." >&2
+fi
+
+# Vulnerability check (dependency-level)
+if command -v govulncheck >/dev/null 2>&1; then
+  govulncheck ./...
+else
+  echo "govulncheck not found; skipping vulnerability check. Install it (go install golang.org/x/vuln/cmd/govulncheck@latest) for full checks." >&2
+fi

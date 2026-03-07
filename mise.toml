@@ -1,0 +1,39 @@
+[tools]
+go = "latest"
+
+# Optional but recommended for consistent linting across machines/CI.
+golangci-lint = "latest"
+
+# Formatter/import organizer used by VS Code and pre-commit.
+"go:golang.org/x/tools/cmd/goimports" = "latest"
+
+# Vulnerability scanner for Go modules.
+"go:golang.org/x/vuln/cmd/govulncheck" = "latest"
+
+[tasks.build]
+description = 'build for linux armv6'
+run = "mkdir -p bin && GOOS=linux GOARCH=arm GOARM=6 go build -o bin/dashboard-linux-armv6"
+
+[tasks.clean]
+description = 'clean build artifacts'
+run = "rm -f bin/dashboard-linux-armv6"
+
+[tasks.fmt]
+description = 'format Go code (gofmt + goimports if available)'
+run = "gofmt -w . && (command -v goimports >/dev/null 2>&1 && goimports -w . || true)"
+
+[tasks.lint]
+description = 'lint (golangci-lint)'
+run = "golangci-lint run ./..."
+
+[tasks.test]
+description = 'run tests'
+run = "go test ./..."
+
+[tasks.vuln]
+description = 'check known vulnerabilities (govulncheck)'
+run = "govulncheck ./..."
+
+[tasks."hooks:install"]
+description = 'install repo-managed git hooks'
+run = "bash scripts/install-githooks.sh"

@@ -1,0 +1,15 @@
+{
+    "go.useLanguageServer": true,
+    "go.lintTool": "golangci-lint",
+    "go.lintOnSave": "workspace",
+    "go.formatTool": "goimports",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "gopls": {
+        "ui.semanticTokens": true,
+        "staticcheck": true
+    },
+    "makefile.configureOnOpen": false
+}

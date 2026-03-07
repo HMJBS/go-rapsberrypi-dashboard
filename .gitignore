@@ -1,0 +1,8 @@
+# build artifacts
+/bin/
+
+# editor
+.vscode/*.log
+
+# OS
+.DS_Store

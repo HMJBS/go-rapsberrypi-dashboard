@@ -1,0 +1,33 @@
+name: pr-title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-commits:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - name: Validate PR title (Conventional Commits)
+        uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            test
+            build
+            ci
+            chore
+            style
+          requireScope: false
+          subjectPattern: ^(?!\s*$).+
+          wip: false
