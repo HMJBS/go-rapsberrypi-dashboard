@@ -88,7 +88,6 @@ JSON は未知の項目を許容しません。設定ミスを早く検知する
 
 ```bash
 ./bin/dashboard-linux-armv6 \
-  -config /etc/dashboard-config.json \
   -fb /dev/fb0 \
   -tz Asia/Tokyo
 ```
