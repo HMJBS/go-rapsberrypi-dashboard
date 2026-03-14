@@ -47,8 +47,38 @@ func SaveCache(path string, w Weather) error {
 	if err != nil {
 		return fmt.Errorf("marshal weather cache: %w", err)
 	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
-		return fmt.Errorf("write weather cache: %w", err)
+	dir := filepath.Dir(path)
+	tmpFile, err := os.CreateTemp(dir, "weather-*.tmp")
+	if err != nil {
+		return fmt.Errorf("create temp weather cache: %w", err)
+	}
+	tmpName := tmpFile.Name()
+	defer func() {
+		// Clean up the temp file on error paths.
+		if tmpName != "" {
+			_ = os.Remove(tmpName)
+		}
+		_ = tmpFile.Close()
+	}()
+
+	if _, err := tmpFile.Write(b); err != nil {
+		return fmt.Errorf("write temp weather cache: %w", err)
+	}
+	if err := tmpFile.Sync(); err != nil {
+		return fmt.Errorf("sync temp weather cache: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("close temp weather cache: %w", err)
+	}
+
+	// Prevent deferred removal after successful rename.
+	name := tmpName
+	tmpName = ""
+	if err := os.Rename(name, path); err != nil {
+		return fmt.Errorf("rename temp weather cache: %w", err)
+	}
+	if err := os.Chmod(path, 0o644); err != nil {
+		return fmt.Errorf("chmod weather cache: %w", err)
 	}
 	return nil
 }
