@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -88,6 +89,14 @@ func ApplyJSONFile(current Values, path string, required bool) (Values, error) {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&cfg); err != nil {
+		return Values{}, fmt.Errorf("decode config file %q: %w", path, err)
+	}
+	// 設定ファイル末尾に余分な JSON データがないことを確認する。
+	var extra json.RawMessage
+	if err := dec.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return Values{}, fmt.Errorf("decode config file %q: unexpected extra JSON values", path)
+		}
 		return Values{}, fmt.Errorf("decode config file %q: %w", path, err)
 	}
 
