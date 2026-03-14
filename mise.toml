@@ -12,7 +12,7 @@ golangci-lint = "2.11.1"
 
 [tasks.build]
 description = 'build for linux armv6'
-run = "mkdir -p bin && GOOS=linux GOARCH=arm GOARM=6 go build -o bin/dashboard-linux-armv6"
+run = "mkdir -p bin && GOOS=linux GOARCH=arm GOARM=6 go build -o bin/dashboard-linux-armv6 ./cmd/dashboard"
 
 [tasks.clean]
 description = 'clean build artifacts'

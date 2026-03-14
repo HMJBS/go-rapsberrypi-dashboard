@@ -7,6 +7,8 @@
 - レビュー観点（チェックリスト）: [docs/review-checklist.md](docs/review-checklist.md)
 - Git 運用（チーム向け）: [docs/git-workflow.md](docs/git-workflow.md)
 - CHANGELOG: [CHANGELOG.md](CHANGELOG.md)
+- アーキテクチャ方針: [docs/architecture.md](docs/architecture.md)
+- Raspberry Pi での実行（FrameBuffer + rclone）: [docs/run-on-raspberrypi.md](docs/run-on-raspberrypi.md)
 
 ## Prerequisites
 
