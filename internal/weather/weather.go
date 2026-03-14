@@ -84,6 +84,9 @@ func SaveCache(path string, w Weather) error {
 }
 
 // Client は天気 API クライアントです。
+
+var defaultHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
 type Client struct {
 	HTTPClient *http.Client
 }
@@ -92,7 +95,7 @@ type Client struct {
 func (c Client) Fetch(ctx context.Context, lat, lon float64, tz string) (Weather, error) {
 	hc := c.HTTPClient
 	if hc == nil {
-		hc = &http.Client{Timeout: 10 * time.Second}
+		hc = defaultHTTPClient
 	}
 
 	q := url.Values{}
