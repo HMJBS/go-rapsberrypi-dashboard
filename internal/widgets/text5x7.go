@@ -8,7 +8,7 @@ import (
 )
 
 // DrawText5x7 draws ASCII text using a tiny 5x7 bitmap font.
-// Unsupported runes are rendered as '?' .
+// Unsupported runes are rendered as '?'.
 func DrawText5x7(img *image.RGBA, x, y, scale int, c color.RGBA, s string) {
 	if scale < 1 {
 		scale = 1
