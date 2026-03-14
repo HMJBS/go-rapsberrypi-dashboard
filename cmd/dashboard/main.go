@@ -10,57 +10,35 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
-	"time"
 
 	"dashboard/internal/app"
+	"dashboard/internal/config"
 )
 
 func main() {
-	var (
-		fbPath          = flag.String("fb", "/dev/fb0", "framebuffer device path")
-		photosDir       = flag.String("photos_dir", "", "directory containing synced photos")
-		cacheDir        = flag.String("cache_dir", "", "directory for cached data (weather)")
-		latitude        = flag.Float64("lat", 35.681236, "latitude for weather")
-		longitude       = flag.Float64("lon", 139.767125, "longitude for weather")
-		timezone        = flag.String("tz", "Asia/Tokyo", "IANA timezone name")
-		photoInterval   = flag.Duration("photo_interval", 1*time.Minute, "interval for changing photo")
-		rescanInterval  = flag.Duration("photo_rescan_interval", 5*time.Minute, "interval for rescanning photos_dir")
-		weatherInterval = flag.Duration("weather_interval", 10*time.Minute, "interval for updating weather")
-		debug           = flag.Bool("debug", false, "enable debug logs")
-		previewDir      = flag.String("preview_dir", "", "write latest frame as PNG into this directory (dev/debug mode; disables framebuffer)")
-		previewEvery    = flag.Duration("preview_every", 1*time.Second, "interval for updating latest.png when preview_dir is set")
-		screenW         = flag.Int("screen_w", 1280, "screen width for preview mode")
-		screenH         = flag.Int("screen_h", 1024, "screen height for preview mode")
-	)
-	flag.Parse()
+	flagValues, debug, configPath, configPathExplicit, visited := parseFlags()
 
-	logger := log.New(os.Stderr, "dashboard: ", log.LstdFlags|log.Lmsgprefix)
-	if *debug {
-		logger.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lmsgprefix)
+	logger := log.New(os.Stderr, "dashboard: ", log.LstdFlags)
+	if debug {
+		logger.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	}
 
-	if *photosDir == "" {
-		// Default to user cache dir if not specified.
-		base, err := os.UserCacheDir()
-		if err != nil {
-			base = "."
-		}
-		*photosDir = filepath.Join(base, "dashboard", "photos")
+	resolved := config.DefaultValues(config.DefaultDataRoot())
+	var err error
+	resolved, err = config.ApplyJSONFile(resolved, configPath, configPathExplicit)
+	if err != nil {
+		logger.Fatalf("load config: %v", err)
 	}
-	if *cacheDir == "" {
-		base, err := os.UserCacheDir()
-		if err != nil {
-			base = "."
-		}
-		*cacheDir = filepath.Join(base, "dashboard", "cache")
+	resolved = config.ApplyFlagOverrides(resolved, flagValues, visited)
+	if err := config.Validate(resolved); err != nil {
+		logger.Fatalf("invalid config: %v", err)
 	}
 
-	if err := os.MkdirAll(*photosDir, 0o755); err != nil {
+	if err := os.MkdirAll(resolved.PhotosDir, 0o755); err != nil {
 		logger.Fatalf("create photos_dir: %v", err)
 	}
-	if err := os.MkdirAll(*cacheDir, 0o755); err != nil {
+	if err := os.MkdirAll(resolved.CacheDir, 0o755); err != nil {
 		logger.Fatalf("create cache_dir: %v", err)
 	}
 
@@ -68,19 +46,19 @@ func main() {
 	defer stop()
 
 	cfg := app.Config{
-		FBPath:          *fbPath,
-		PhotosDir:       *photosDir,
-		CacheDir:        *cacheDir,
-		PreviewDir:      *previewDir,
-		PreviewEvery:    *previewEvery,
-		ScreenWidth:     *screenW,
-		ScreenHeight:    *screenH,
-		Latitude:        *latitude,
-		Longitude:       *longitude,
-		Timezone:        *timezone,
-		PhotoInterval:   *photoInterval,
-		RescanInterval:  *rescanInterval,
-		WeatherInterval: *weatherInterval,
+		FBPath:          resolved.FBPath,
+		PhotosDir:       resolved.PhotosDir,
+		CacheDir:        resolved.CacheDir,
+		PreviewDir:      resolved.PreviewDir,
+		PreviewEvery:    resolved.PreviewEvery,
+		ScreenWidth:     resolved.ScreenWidth,
+		ScreenHeight:    resolved.ScreenHeight,
+		Latitude:        resolved.Latitude,
+		Longitude:       resolved.Longitude,
+		Timezone:        resolved.Timezone,
+		PhotoInterval:   resolved.PhotoInterval,
+		RescanInterval:  resolved.RescanInterval,
+		WeatherInterval: resolved.WeatherInterval,
 		Background:      color.RGBA{R: 0, G: 0, B: 0, A: 255},
 	}
 
@@ -90,9 +68,42 @@ func main() {
 		}
 		// If running on dev machine without framebuffer, provide a helpful hint.
 		var pathErr *os.PathError
-		if errors.As(err, &pathErr) && pathErr.Path == *fbPath {
+		if errors.As(err, &pathErr) && pathErr.Path == resolved.FBPath {
 			fmt.Fprintln(os.Stderr, "Hint: This program needs Linux framebuffer. On dev machines, you can use -preview_dir to write latest.png without /dev/fb0.")
 		}
 		logger.Fatalf("fatal: %v", err)
 	}
+}
+
+// parseFlags はコマンドラインフラグを解釈し、設定値と補助情報を返します。
+// 戻り値は順に、フラグ値、debug 指定の有無、設定ファイルパス、config フラグの明示指定有無、
+// そして JSON 設定より優先して上書きすべきフラグ名の集合です。
+func parseFlags() (config.Values, bool, string, bool, map[string]bool) {
+	defaults := config.DefaultValues(config.DefaultDataRoot())
+	configPath := config.DefaultConfigPath
+	debug := false
+
+	flag.StringVar(&defaults.FBPath, "fb", defaults.FBPath, "framebuffer device path")
+	flag.StringVar(&configPath, "config", configPath, "path to JSON config file")
+	flag.StringVar(&defaults.PhotosDir, "photos_dir", defaults.PhotosDir, "directory containing synced photos")
+	flag.StringVar(&defaults.CacheDir, "cache_dir", defaults.CacheDir, "directory for cached data (weather)")
+	flag.Float64Var(&defaults.Latitude, "lat", defaults.Latitude, "latitude for weather")
+	flag.Float64Var(&defaults.Longitude, "lon", defaults.Longitude, "longitude for weather")
+	flag.StringVar(&defaults.Timezone, "tz", defaults.Timezone, "IANA timezone name")
+	flag.DurationVar(&defaults.PhotoInterval, "photo_interval", defaults.PhotoInterval, "interval for changing photo")
+	flag.DurationVar(&defaults.RescanInterval, "photo_rescan_interval", defaults.RescanInterval, "interval for rescanning photos_dir")
+	flag.DurationVar(&defaults.WeatherInterval, "weather_interval", defaults.WeatherInterval, "interval for updating weather")
+	flag.BoolVar(&debug, "debug", debug, "enable debug logs")
+	flag.StringVar(&defaults.PreviewDir, "preview_dir", defaults.PreviewDir, "write latest frame as PNG into this directory (dev/debug mode; disables framebuffer)")
+	flag.DurationVar(&defaults.PreviewEvery, "preview_every", defaults.PreviewEvery, "interval for updating latest.png when preview_dir is set")
+	flag.IntVar(&defaults.ScreenWidth, "screen_w", defaults.ScreenWidth, "screen width for preview mode")
+	flag.IntVar(&defaults.ScreenHeight, "screen_h", defaults.ScreenHeight, "screen height for preview mode")
+	flag.Parse()
+
+	visited := map[string]bool{}
+	flag.CommandLine.Visit(func(f *flag.Flag) {
+		visited[f.Name] = true
+	})
+
+	return defaults, debug, configPath, visited["config"], visited
 }

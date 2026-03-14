@@ -48,31 +48,48 @@ Google Drive 上の画像は、アプリが直接取得しません。
 
 運用例は [run-on-raspberrypi.md](run-on-raspberrypi.md) を参照してください。
 
-## 設定（起動オプション）
+## 設定（JSON + 起動オプション）
 
-現状の実装では JSON の設定ファイルは使用せず、起動時の **コマンドラインフラグ** で設定します。
+設定は JSON ファイルと起動時のコマンドラインフラグを併用できます。
+
+- 既定の設定ファイルパスは `/etc/dashboard-config.json`
+- `-config` で別パスの JSON を指定可能
+- 優先順位は「既定値 < JSON < フラグ」です
 
 主な設定項目は以下です。
 
-- 天気情報の緯度経度（`-lat`, `-lon`）
-- タイムゾーン（`-tz`）
-- 画像ディレクトリ（`-photos_dir`）
-- 画像の切り替え間隔（`-photo_interval`）
-- 画像ディレクトリの再スキャン間隔（`-photo_rescan_interval`）
-- 天気情報の更新間隔（`-weather_interval`）
+- 天気情報の緯度経度（JSON: `latitude`, `longitude` / フラグ: `-lat`, `-lon`）
+- タイムゾーン（JSON: `timezone` / フラグ: `-tz`）
+- 画像ディレクトリ（JSON: `photos_dir` / フラグ: `-photos_dir`）
+- キャッシュディレクトリ（JSON: `cache_dir` / フラグ: `-cache_dir`）
+- 画像の切り替え間隔（JSON: `photo_interval_seconds` / フラグ: `-photo_interval`）
+- 画像ディレクトリの再スキャン間隔（JSON: `photo_rescan_interval_seconds` / フラグ: `-photo_rescan_interval`）
+- 天気情報の更新間隔（JSON: `weather_interval_minutes` / フラグ: `-weather_interval`）
+- 開発用プレビュー出力（JSON: `preview_dir`, `preview_every_ms`, `screen_w`, `screen_h` / フラグ: `-preview_dir`, `-preview_every`, `-screen_w`, `-screen_h`）
 
-その他、開発用に FrameBuffer を使わず描画結果を PNG として出力する `-preview_dir` などのフラグもあります。
+JSON は未知の項目を許容しません。設定ミスを早く検知するため、未定義キーがあると起動時にエラーになります。
+
+### 設定ファイル例
+
+```json
+{
+  "latitude": 35.681236,
+  "longitude": 139.767125,
+  "timezone": "Asia/Tokyo",
+  "photos_dir": "/var/lib/dashboard/photos",
+  "cache_dir": "/var/lib/dashboard/cache",
+  "photo_interval_seconds": 60,
+  "photo_rescan_interval_seconds": 300,
+  "weather_interval_minutes": 10
+}
+```
 
 ### 起動例
 
 ```bash
 ./bin/dashboard-linux-armv6 \
   -fb /dev/fb0 \
-  -photos_dir /var/lib/dashboard/photos \
-  -cache_dir /var/lib/dashboard/cache \
-  -lat 35.681236 -lon 139.767125 \
-  -tz Asia/Tokyo \
-  -photo_interval 1m \
-  -photo_rescan_interval 5m \
-  -weather_interval 10m
+  -tz Asia/Tokyo
 ```
+
+上記の例では、ディレクトリや緯度経度などの定常設定は JSON から読み込み、`-tz` だけをフラグで上書きしています。
