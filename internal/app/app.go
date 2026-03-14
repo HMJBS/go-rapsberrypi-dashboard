@@ -98,13 +98,22 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 	rescanPhotos(logger, cfg, state)
 	changePhoto(logger, cfg, state, sz)
 
-	nextPhoto := time.Now().Add(cfg.PhotoInterval)
-	nextScan := time.Now().Add(cfg.RescanInterval)
+	loc := time.Local
+	if cfg.Timezone != "" {
+		l, err := time.LoadLocation(cfg.Timezone)
+		if err != nil {
+			return fmt.Errorf("invalid timezone %q: %w", cfg.Timezone, err)
+		}
+		loc = l
+	}
+
+	nextPhoto := time.Now().In(loc).Add(cfg.PhotoInterval)
+	nextScan := time.Now().In(loc).Add(cfg.RescanInterval)
 
 	tick := time.NewTicker(1 * time.Second)
 	defer tick.Stop()
 
-	nextPreview := time.Now()
+	nextPreview := time.Now().In(loc)
 	if cfg.PreviewEvery <= 0 {
 		cfg.PreviewEvery = 1 * time.Second
 	}
@@ -114,7 +123,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-tick.C:
-			now := time.Now()
+			now := time.Now().In(loc)
 			if cfg.RescanInterval > 0 && now.After(nextScan) {
 				rescanPhotos(logger, cfg, state)
 				nextScan = now.Add(cfg.RescanInterval)
