@@ -128,11 +128,16 @@ func (c Client) Fetch(ctx context.Context, lat, lon float64, tz string) (Weather
 		return Weather{}, fmt.Errorf("decode: %w", err)
 	}
 
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
 	observed := time.Now()
 	if decoded.Current.Time != "" {
 		if t, err := time.Parse(time.RFC3339, decoded.Current.Time); err == nil {
 			observed = t
-		} else if t, err := time.Parse("2006-01-02T15:04", decoded.Current.Time); err == nil {
+		} else if t, err := time.ParseInLocation("2006-01-02T15:04", decoded.Current.Time, loc); err == nil {
 			observed = t
 		}
 	}
