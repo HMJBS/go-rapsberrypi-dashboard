@@ -17,6 +17,7 @@ import (
 	"dashboard/internal/gfx"
 	"dashboard/internal/photos"
 	"dashboard/internal/previewpng"
+	"dashboard/internal/theme"
 	"dashboard/internal/weather"
 	"dashboard/internal/widgets"
 )
@@ -41,8 +42,6 @@ type Config struct {
 	PhotoInterval   time.Duration
 	RescanInterval  time.Duration
 	WeatherInterval time.Duration
-
-	Background color.RGBA
 }
 
 type appState struct {
@@ -96,7 +95,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 	go weatherLoop(ctx, logger, cfg, state)
 
 	rescanPhotos(logger, cfg, state)
-	changePhoto(logger, cfg, state, sz)
+	changePhoto(logger, state, sz)
 
 	loc := time.Local
 	if cfg.Timezone != "" {
@@ -129,11 +128,11 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 				nextScan = now.Add(cfg.RescanInterval)
 			}
 			if cfg.PhotoInterval > 0 && now.After(nextPhoto) {
-				changePhoto(logger, cfg, state, sz)
+				changePhoto(logger, state, sz)
 				nextPhoto = now.Add(cfg.PhotoInterval)
 			}
 
-			render(frame, cfg, state, now)
+			render(frame, state, now)
 			if cfg.PreviewDir != "" {
 				if now.After(nextPreview) {
 					if err := previewpng.WriteLatestPNG(cfg.PreviewDir, frame); err != nil {
@@ -221,7 +220,7 @@ func rescanPhotos(logger *log.Logger, cfg Config, state *appState) {
 	}
 }
 
-func changePhoto(logger *log.Logger, cfg Config, state *appState, sz image.Point) {
+func changePhoto(logger *log.Logger, state *appState, sz image.Point) {
 	state.mu.RLock()
 	files := append([]string(nil), state.photoFiles...)
 	prev := state.photoPath
@@ -238,7 +237,7 @@ func changePhoto(logger *log.Logger, cfg Config, state *appState, sz image.Point
 		}
 	}
 
-	img, err := photos.LoadScreenImage(pick, sz.X, sz.Y, cfg.Background)
+	img, err := photos.LoadScreenImage(pick, sz.X, sz.Y, theme.DefaultTheme.BackgroundColor)
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	state.photoAt = time.Now()
@@ -253,8 +252,8 @@ func changePhoto(logger *log.Logger, cfg Config, state *appState, sz image.Point
 	logger.Printf("photo changed: %s", pick)
 }
 
-func render(dst *image.RGBA, cfg Config, state *appState, now time.Time) {
-	gfx.FillRGBA(dst, cfg.Background)
+func render(dst *image.RGBA, state *appState, now time.Time) {
+	gfx.FillRGBA(dst, theme.DefaultTheme.BackgroundColor)
 
 	state.mu.RLock()
 	photo := state.photo

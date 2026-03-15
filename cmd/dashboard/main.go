@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"image/color"
 	"log"
 	"os"
 	"os/signal"
@@ -59,7 +58,6 @@ func main() {
 		PhotoInterval:   resolved.PhotoInterval,
 		RescanInterval:  resolved.RescanInterval,
 		WeatherInterval: resolved.WeatherInterval,
-		Background:      color.RGBA{R: 0, G: 0, B: 0, A: 255},
 	}
 
 	if err := app.Run(ctx, logger, cfg); err != nil {
