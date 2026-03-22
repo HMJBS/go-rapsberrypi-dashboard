@@ -4,6 +4,12 @@ go = "1.26.1"
 # Optional but recommended for consistent linting across machines/CI.
 golangci-lint = "2.11.1"
 
+# debugger for Go.
+"go:github.com/go-delve/delve/cmd/dlv" = "latest"
+
+# language server for Go, used by VS Code and other editors.
+"go:golang.org/x/tools/gopls" = "latest"
+
 # Formatter/import organizer used by VS Code and pre-commit.
 "go:golang.org/x/tools/cmd/goimports" = "latest"
 

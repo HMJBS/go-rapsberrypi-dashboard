@@ -53,3 +53,21 @@ func RectRGBA(img *image.RGBA, x0, y0, x1, y1 int, c color.RGBA) {
 		}
 	}
 }
+
+// DrawImage は img 上に src を描画します。src のアルファチャンネルは無視されます。
+func DrawImage(dst *image.RGBA, src image.Image, x, y int) {
+	b := src.Bounds()
+	w := b.Dx()
+	h := b.Dy()
+	for j := 0; j < h; j++ {
+		row := dst.Pix[(y+j)*dst.Stride : (y+j)*dst.Stride+(x+w)*4]
+		for i := 0; i < w; i++ {
+			c := src.At(b.Min.X+i, b.Min.Y+j)
+			cr, cg, cb, ca := c.RGBA()
+			row[i*4+0] = uint8(cr >> 8)
+			row[i*4+1] = uint8(cg >> 8)
+			row[i*4+2] = uint8(cb >> 8)
+			row[i*4+3] = uint8(ca >> 8)
+		}
+	}
+}
