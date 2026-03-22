@@ -263,13 +263,8 @@ func render(dst *image.RGBA, now time.Time) {
 
 	// TODO: 画像ファイルを描画する
 
-	overlay, _, err := assets.GetOverlay()
-	if err != nil {
-		fmt.Printf("failed to load overlay: %v\n", err)
-		return
-	}
 	// オーバーレイを描画
-	gfx.DrawImage(dst, overlay, 0, 0)
+	gfx.DrawImage(dst, assets.Overlay, 0, 0)
 
 	// TODO: 天気情報を描画
 	widgets.DrawClockWidget(dst, now)

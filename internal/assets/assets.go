@@ -5,19 +5,24 @@ import (
 	"bytes"
 	_ "embed"
 	"image"
+	_ "image/png" // PNG デコードを有効にするためのインポート
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 )
 
-// Overlay はダッシュボードのオーバーレイ画像です。
-//
 //go:embed overlay.png
 var overlay []byte
 
-// GetOverlay はオーバーレイ画像を返します。
-func GetOverlay() (image.Image, string, error) {
-	return image.Decode(bytes.NewReader(overlay))
+// Overlay はダッシュボードのオーバーレイ画像です。
+var Overlay = mustLoadOverlay()
+
+func mustLoadOverlay() image.Image {
+	img, _, err := image.Decode(bytes.NewReader(overlay))
+	if err != nil {
+		panic(err)
+	}
+	return img
 }
 
 // InterDisplayMedium は、Google Fonts の Inter Display Medium フォントの TTF データです。
