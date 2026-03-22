@@ -265,7 +265,7 @@ func render(dst *image.RGBA, now time.Time) {
 
 	overlay, _, err := assets.GetOverlay()
 	if err != nil {
-		// handle error
+		fmt.Printf("failed to load overlay: %v\n", err)
 		return
 	}
 	// オーバーレイを描画

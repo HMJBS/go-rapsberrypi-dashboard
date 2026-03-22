@@ -2,8 +2,8 @@ package widgets
 
 import (
 	"dashboard/internal/assets"
+	"dashboard/internal/theme"
 	"image"
-	"image/color"
 	"time"
 
 	"golang.org/x/image/font"
@@ -22,11 +22,11 @@ func DrawClockWidget(dst *image.RGBA, now time.Time) {
 
 func drawDate(dst *image.RGBA, now time.Time) {
 
-	x := 860
-	y := 202
+	x := theme.DefaultTheme.ClockWidgetDateX
+	y := theme.DefaultTheme.ClockWidgetDateY
 	face := assets.ClockDateFont
 	dateStr := now.Format("2006/01/02")
-	gray := color.RGBA{R: 100, G: 116, B: 139, A: 255}
+	gray := theme.DefaultTheme.ClockWidgetDateColor
 	drawer := font.Drawer{
 		Dst:  dst,
 		Src:  image.NewUniform(gray),
@@ -38,11 +38,11 @@ func drawDate(dst *image.RGBA, now time.Time) {
 
 func drawTime(dst *image.RGBA, now time.Time) {
 
-	x := 860
-	y := 300
+	x := theme.DefaultTheme.ClockWidgetTimeX
+	y := theme.DefaultTheme.ClockWidgetTimeY
 	face := assets.ClockTimeFont
 	timeStr := now.Format("15:04:05")
-	black := color.RGBA{R: 0, G: 0, B: 0, A: 255}
+	black := theme.DefaultTheme.ClockWidgetTimeColor
 	drawer := font.Drawer{
 		Dst:  dst,
 		Src:  image.NewUniform(black),
