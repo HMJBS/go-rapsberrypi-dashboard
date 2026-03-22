@@ -32,8 +32,8 @@ var digitSegments = [10]uint8{
 	9: segA | segB | segC | segD | segF | segG,
 }
 
-// DrawClock draws HH:MM:SS in a seven-segment style.
-func DrawClock(img *image.RGBA, x, y int, digitW, digitH, thickness, gap int, c color.RGBA, now time.Time) {
+// Draw7SegClock draws HH:MM:SS in a seven-segment style.
+func Draw7SegClock(img *image.RGBA, x, y int, digitW, digitH, thickness, gap int, c color.RGBA, now time.Time) {
 	h := now.Hour()
 	m := now.Minute()
 	s := now.Second()

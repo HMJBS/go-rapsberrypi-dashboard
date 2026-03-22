@@ -53,3 +53,28 @@ func RectRGBA(img *image.RGBA, x0, y0, x1, y1 int, c color.RGBA) {
 		}
 	}
 }
+
+// DrawImage は img 上に src を描画します。
+func DrawImage(dst *image.RGBA, src image.Image, x, y int) {
+	srcBounds := src.Bounds()
+	drawRect := image.Rect(x, y, x+srcBounds.Dx(), y+srcBounds.Dy()).Intersect(dst.Bounds())
+	if drawRect.Empty() {
+		return
+	}
+
+	srcStartX := srcBounds.Min.X + (drawRect.Min.X - x)
+	srcStartY := srcBounds.Min.Y + (drawRect.Min.Y - y)
+	drawWidth := drawRect.Dx()
+
+	for dstY, srcY := drawRect.Min.Y, srcStartY; dstY < drawRect.Max.Y; dstY, srcY = dstY+1, srcY+1 {
+		rowStart := dst.PixOffset(drawRect.Min.X, dstY)
+		row := dst.Pix[rowStart : rowStart+drawWidth*4]
+		for i, srcX := 0, srcStartX; i < drawWidth; i, srcX = i+1, srcX+1 {
+			cr, cg, cb, ca := src.At(srcX, srcY).RGBA()
+			row[i*4+0] = uint8(cr >> 8)
+			row[i*4+1] = uint8(cg >> 8)
+			row[i*4+2] = uint8(cb >> 8)
+			row[i*4+3] = uint8(ca >> 8)
+		}
+	}
+}

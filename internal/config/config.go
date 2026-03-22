@@ -68,7 +68,7 @@ func DefaultValues(dataRoot string) Values {
 		PhotoInterval:   1 * time.Minute,
 		RescanInterval:  5 * time.Minute,
 		WeatherInterval: 10 * time.Minute,
-		PreviewEvery:    1 * time.Second,
+		PreviewEvery:    10 * time.Second,
 		ScreenWidth:     1280,
 		ScreenHeight:    1024,
 	}

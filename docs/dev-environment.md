@@ -18,7 +18,7 @@
 
 ## 初期セットアップ
 
-1) ツール導入（Go / golangci-lint など）
+1) ツール導入（Go / golangci-lint2   など）
 
 ```bash
 mise install

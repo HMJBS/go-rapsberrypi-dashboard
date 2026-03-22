@@ -5,18 +5,17 @@ import (
 	"context"
 	"fmt"
 	"image"
-	"image/color"
-	"image/draw"
 	"log"
 	"math/rand"
-	"strings"
 	"sync"
 	"time"
 
+	"dashboard/internal/assets"
 	"dashboard/internal/fb"
 	"dashboard/internal/gfx"
 	"dashboard/internal/photos"
 	"dashboard/internal/previewpng"
+	"dashboard/internal/theme"
 	"dashboard/internal/weather"
 	"dashboard/internal/widgets"
 )
@@ -41,8 +40,6 @@ type Config struct {
 	PhotoInterval   time.Duration
 	RescanInterval  time.Duration
 	WeatherInterval time.Duration
-
-	Background color.RGBA
 }
 
 type appState struct {
@@ -96,7 +93,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 	go weatherLoop(ctx, logger, cfg, state)
 
 	rescanPhotos(logger, cfg, state)
-	changePhoto(logger, cfg, state, sz)
+	changePhoto(logger, state, sz)
 
 	loc := time.Local
 	if cfg.Timezone != "" {
@@ -129,11 +126,11 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 				nextScan = now.Add(cfg.RescanInterval)
 			}
 			if cfg.PhotoInterval > 0 && now.After(nextPhoto) {
-				changePhoto(logger, cfg, state, sz)
+				changePhoto(logger, state, sz)
 				nextPhoto = now.Add(cfg.PhotoInterval)
 			}
 
-			render(frame, cfg, state, now)
+			render(frame, now)
 			if cfg.PreviewDir != "" {
 				if now.After(nextPreview) {
 					if err := previewpng.WriteLatestPNG(cfg.PreviewDir, frame); err != nil {
@@ -221,7 +218,7 @@ func rescanPhotos(logger *log.Logger, cfg Config, state *appState) {
 	}
 }
 
-func changePhoto(logger *log.Logger, cfg Config, state *appState, sz image.Point) {
+func changePhoto(logger *log.Logger, state *appState, sz image.Point) {
 	state.mu.RLock()
 	files := append([]string(nil), state.photoFiles...)
 	prev := state.photoPath
@@ -238,7 +235,7 @@ func changePhoto(logger *log.Logger, cfg Config, state *appState, sz image.Point
 		}
 	}
 
-	img, err := photos.LoadScreenImage(pick, sz.X, sz.Y, cfg.Background)
+	img, err := photos.LoadScreenImage(pick, sz.X, sz.Y, theme.DefaultTheme.BackgroundColor)
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	state.photoAt = time.Now()
@@ -253,46 +250,23 @@ func changePhoto(logger *log.Logger, cfg Config, state *appState, sz image.Point
 	logger.Printf("photo changed: %s", pick)
 }
 
-func render(dst *image.RGBA, cfg Config, state *appState, now time.Time) {
-	gfx.FillRGBA(dst, cfg.Background)
+func render(dst *image.RGBA, now time.Time) {
+	gfx.FillRGBA(dst, theme.DefaultTheme.BackgroundColor)
 
-	state.mu.RLock()
-	photo := state.photo
-	w := state.weather
-	wOK := state.weatherOK
-	wErr := state.weatherErr
-	pErr := state.photoErr
-	state.mu.RUnlock()
+	// state.mu.RLock()
+	// // photo := state.photo
+	// // w := state.weather
+	// // wOK := state.weatherOK
+	// // wErr := state.weatherErr
+	// // pErr := state.photoErr
+	// state.mu.RUnlock()
 
-	if photo != nil {
-		draw.Draw(dst, dst.Bounds(), photo, image.Point{}, draw.Src)
-	}
+	// TODO: 画像ファイルを描画する
 
-	clockColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	widgets.DrawClock(dst, 40, 40, 90, 180, 18, 18, clockColor, now)
+	// オーバーレイを描画
+	gfx.DrawImage(dst, assets.Overlay, 0, 0)
 
-	textColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	wx := 40
-	wy := 260
-	widgets.DrawText5x7(dst, wx, wy, 4, textColor, "WEATHER")
-
-	line2 := "N/A"
-	if wOK {
-		line2 = fmt.Sprintf("TEMP: %.1fC  %s", w.TempC, weather.CodeLabel(w.Code))
-	} else if wErr != "" {
-		line2 = "ERR: " + truncate(wErr, 26)
-	}
-	widgets.DrawText5x7(dst, wx, wy+40, 3, textColor, strings.ToUpper(line2))
-
-	if pErr != "" {
-		widgets.DrawText5x7(dst, wx, wy+80, 3, textColor, strings.ToUpper("PHOTO: "+truncate(pErr, 30)))
-	}
-}
-
-func truncate(s string, limit int) string {
-	r := []rune(s)
-	if len(r) <= limit {
-		return s
-	}
-	return string(r[:limit])
+	// TODO: 天気情報を描画
+	widgets.DrawClockWidget(dst, now)
+	// TODO: 時刻を描画
 }
