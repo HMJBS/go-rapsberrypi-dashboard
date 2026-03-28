@@ -7,9 +7,6 @@ import (
 	"dashboard/internal/weather"
 	"fmt"
 	"image"
-
-	"golang.org/x/image/font"
-	"golang.org/x/image/math/fixed"
 )
 
 // DrawWeatherForecastWidget は、天気予報ウィジェットを描画します。
@@ -32,45 +29,27 @@ func drawIcon(dst *image.RGBA, icon image.Image) {
 }
 
 func drawErrorText(dst *image.RGBA, err string) {
-	x := 900
-	y := 700
-	face := assets.ClockTimeFont
+	x := 1030
+	y := 850
+	face := assets.ClockDateFont
 	gray := theme.DefaultTheme.ClockWidgetDateColor
-	drawer := font.Drawer{
-		Dst:  dst,
-		Src:  image.NewUniform(gray),
-		Face: face,
-		Dot:  fixed.P(x, y),
-	}
-	drawer.DrawString(err)
+	gfx.DrawText(dst, err, x, y, face, gray, gfx.Centralized)
 }
 
 func drawTemperatureText(dst *image.RGBA, tempC float64) {
-	x := 930
+	x := 1030
 	y := 800
 
 	face := assets.ClockTimeFont
 	gray := theme.DefaultTheme.ClockWidgetTimeColor
-	drawer := font.Drawer{
-		Dst:  dst,
-		Src:  image.NewUniform(gray),
-		Face: face,
-		Dot:  fixed.P(x, y),
-	}
-	drawer.DrawString(fmt.Sprintf("%.1f°C", tempC))
+	gfx.DrawText(dst, fmt.Sprintf("%.1f°C", tempC), x, y, face, gray, gfx.Centralized)
 }
 
 func drawWeatherText(dst *image.RGBA, text string) {
-	x := 930
-	y := 880
+	x := 1030
+	y := 850
 
 	face := assets.ClockDateFont
 	gray := theme.DefaultTheme.ClockWidgetDateColor
-	drawer := font.Drawer{
-		Dst:  dst,
-		Src:  image.NewUniform(gray),
-		Face: face,
-		Dot:  fixed.P(x, y),
-	}
-	drawer.DrawString(text)
+	gfx.DrawText(dst, text, x, y, face, gray, gfx.Centralized)
 }

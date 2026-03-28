@@ -6,6 +6,8 @@ import (
 	"image/color"
 
 	"golang.org/x/image/draw"
+	"golang.org/x/image/font"
+	"golang.org/x/image/math/fixed"
 )
 
 // FillRGBA は img 全体を単色で塗りつぶします。
@@ -77,4 +79,41 @@ func ScaleImage(src image.Image, scale float64) image.Image {
 	dst := image.NewRGBA(image.Rect(0, 0, dstWidth, dstHeight))
 	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), src, srcBounds, draw.Over, nil)
 	return dst
+}
+
+// TextDrawMode は DrawText の描画モードを表します。
+type TextDrawMode int
+
+// DrawText の描画モード定数です。
+const (
+	Normal      TextDrawMode = iota // Normal は、指定した座標をテキストの左下とする描画モードです。
+	Centralized                     // Centralized は、指定した座標をテキストの中央とする描画モードです。
+)
+
+// DrawText は img 上に text を描画します。
+func DrawText(
+	dst *image.RGBA, text string, x, y int, face font.Face,
+	c color.Color, mode TextDrawMode,
+) {
+	switch mode {
+	case Normal:
+		drawer := font.Drawer{
+			Dst:  dst,
+			Src:  image.NewUniform(c),
+			Face: face,
+			Dot:  fixed.P(x, y),
+		}
+		drawer.DrawString(text)
+	case Centralized:
+		textWidth := font.MeasureString(face, text).Round()
+		drawer := font.Drawer{
+			Dst:  dst,
+			Src:  image.NewUniform(c),
+			Face: face,
+			Dot:  fixed.P(x-textWidth/2, y),
+		}
+		drawer.DrawString(text)
+	default:
+		panic("unknown TextDrawMode")
+	}
 }

@@ -2,12 +2,10 @@ package widgets
 
 import (
 	"dashboard/internal/assets"
+	"dashboard/internal/gfx"
 	"dashboard/internal/theme"
 	"image"
 	"time"
-
-	"golang.org/x/image/font"
-	"golang.org/x/image/math/fixed"
 )
 
 // DrawClockWidget は、時計ウィジェットを描画します。
@@ -30,13 +28,7 @@ func drawDate(dst *image.RGBA, now time.Time) {
 	face := assets.ClockDateFont
 	dateStr := now.Format("2006/01/02")
 	gray := theme.DefaultTheme.ClockWidgetDateColor
-	drawer := font.Drawer{
-		Dst:  dst,
-		Src:  image.NewUniform(gray),
-		Face: face,
-		Dot:  fixed.P(x, y),
-	}
-	drawer.DrawString(dateStr)
+	gfx.DrawText(dst, dateStr, x, y, face, gray, gfx.Normal)
 }
 
 func drawTime(dst *image.RGBA, now time.Time) {
@@ -46,13 +38,7 @@ func drawTime(dst *image.RGBA, now time.Time) {
 	face := assets.ClockTimeFont
 	timeStr := now.Format("15:04:05")
 	black := theme.DefaultTheme.ClockWidgetTimeColor
-	drawer := font.Drawer{
-		Dst:  dst,
-		Src:  image.NewUniform(black),
-		Face: face,
-		Dot:  fixed.P(x, y),
-	}
-	drawer.DrawString(timeStr)
+	gfx.DrawText(dst, timeStr, x, y, face, black, gfx.Normal)
 }
 
 func drawLocation(dst *image.RGBA, location string) {
@@ -61,11 +47,5 @@ func drawLocation(dst *image.RGBA, location string) {
 	y := theme.DefaultTheme.ClockWidgetLocaleY
 	face := assets.ClockDateFont
 	gray := theme.DefaultTheme.ClockWidgetLocaleColor
-	drawer := font.Drawer{
-		Dst:  dst,
-		Src:  image.NewUniform(gray),
-		Face: face,
-		Dot:  fixed.P(x, y),
-	}
-	drawer.DrawString(location)
+	gfx.DrawText(dst, location, x, y, face, gray, gfx.Normal)
 }
