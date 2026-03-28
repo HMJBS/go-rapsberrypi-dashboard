@@ -1,1 +1,5 @@
+Blit
+fbdev
 opentype
+previewpng
+rescan

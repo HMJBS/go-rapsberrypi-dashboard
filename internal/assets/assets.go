@@ -70,3 +70,65 @@ func mustLoadInterBold() font.Face {
 	}
 	return face
 }
+
+// WeatherIcons は、天気コードに対応するアイコンセットです。
+type WeatherIcons struct {
+	ClearDay   image.Image
+	ClearNight image.Image
+	Cloud      image.Image
+	Drizzle    image.Image
+	Fog        image.Image
+	Rain       image.Image
+	Snow       image.Image
+	Thunder    image.Image
+}
+
+//go:embed clear-day.png
+var clearDayIcon []byte
+
+//go:embed cloud.png
+var cloudIcon []byte
+
+//go:embed clear-night.png
+var clearNightIcon []byte
+
+//go:embed drizzle.png
+var drizzleIcon []byte
+
+//go:embed fog.png
+var fogIcon []byte
+
+//go:embed rain.png
+var rainIcon []byte
+
+//go:embed snow.png
+var snowIcon []byte
+
+//go:embed thunder.png
+var thunderIcon []byte
+
+// WeatherIconSet は、天気コードに対応するアイコンセットです。
+var WeatherIconSet = mustLoadWeatherIcons()
+
+func loadIcon(data []byte) image.Image {
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		panic(err)
+	}
+	return img
+}
+
+func mustLoadWeatherIcons() WeatherIcons {
+	// ここでは、天気アイコンを読み込むコードを実装します。
+	// 例えば、アイコン画像を埋め込んでデコードするなどの方法があります。
+	return WeatherIcons{
+		ClearDay:   loadIcon(clearDayIcon),
+		ClearNight: loadIcon(clearNightIcon),
+		Cloud:      loadIcon(cloudIcon),
+		Drizzle:    loadIcon(drizzleIcon),
+		Fog:        loadIcon(fogIcon),
+		Rain:       loadIcon(rainIcon),
+		Snow:       loadIcon(snowIcon),
+		Thunder:    loadIcon(thunderIcon),
+	}
+}
