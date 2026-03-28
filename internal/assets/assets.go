@@ -61,7 +61,7 @@ func mustLoadInterBold() font.Face {
 		panic(err)
 	}
 	face, err := opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    80,
+		Size:    66,
 		DPI:     72,
 		Hinting: font.HintingNone,
 	})

@@ -130,7 +130,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 				nextPhoto = now.Add(cfg.PhotoInterval)
 			}
 
-			render(frame, now)
+			render(frame, now, cfg)
 			if cfg.PreviewDir != "" {
 				if now.After(nextPreview) {
 					if err := previewpng.WriteLatestPNG(cfg.PreviewDir, frame); err != nil {
@@ -250,7 +250,7 @@ func changePhoto(logger *log.Logger, state *appState, sz image.Point) {
 	logger.Printf("photo changed: %s", pick)
 }
 
-func render(dst *image.RGBA, now time.Time) {
+func render(dst *image.RGBA, now time.Time, cfg Config) {
 	gfx.FillRGBA(dst, theme.DefaultTheme.BackgroundColor)
 
 	// state.mu.RLock()
@@ -267,6 +267,6 @@ func render(dst *image.RGBA, now time.Time) {
 	gfx.DrawImage(dst, assets.Overlay, 0, 0)
 
 	// TODO: 天気情報を描画
-	widgets.DrawClockWidget(dst, now)
+	widgets.DrawClockWidget(dst, now, cfg.Timezone)
 	// TODO: 時刻を描画
 }

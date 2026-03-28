@@ -12,12 +12,15 @@ import (
 
 // DrawClockWidget は、時計ウィジェットを描画します。
 // ここでは、時計ウィジェットの描画コードを実装します。
-func DrawClockWidget(dst *image.RGBA, now time.Time) {
+func DrawClockWidget(dst *image.RGBA, now time.Time, locale string) {
 	// 日付を描画
 	drawDate(dst, now)
 
 	// 時刻を描画
 	drawTime(dst, now)
+
+	// ロケール文字列を描画
+	drawLocale(dst, locale)
 }
 
 func drawDate(dst *image.RGBA, now time.Time) {
@@ -50,4 +53,19 @@ func drawTime(dst *image.RGBA, now time.Time) {
 		Dot:  fixed.P(x, y),
 	}
 	drawer.DrawString(timeStr)
+}
+
+func drawLocale(dst *image.RGBA, locale string) {
+
+	x := theme.DefaultTheme.ClockWidgetLocaleX
+	y := theme.DefaultTheme.ClockWidgetLocaleY
+	face := assets.ClockDateFont
+	gray := theme.DefaultTheme.ClockWidgetLocaleColor
+	drawer := font.Drawer{
+		Dst:  dst,
+		Src:  image.NewUniform(gray),
+		Face: face,
+		Dot:  fixed.P(x, y),
+	}
+	drawer.DrawString(locale)
 }
