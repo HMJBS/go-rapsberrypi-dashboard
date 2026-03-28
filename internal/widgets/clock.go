@@ -18,6 +18,9 @@ func DrawClockWidget(dst *image.RGBA, now time.Time) {
 
 	// 時刻を描画
 	drawTime(dst, now)
+
+	// ロケール文字列を描画
+	drawLocation(dst, now.Location().String())
 }
 
 func drawDate(dst *image.RGBA, now time.Time) {
@@ -50,4 +53,19 @@ func drawTime(dst *image.RGBA, now time.Time) {
 		Dot:  fixed.P(x, y),
 	}
 	drawer.DrawString(timeStr)
+}
+
+func drawLocation(dst *image.RGBA, location string) {
+
+	x := theme.DefaultTheme.ClockWidgetLocaleX
+	y := theme.DefaultTheme.ClockWidgetLocaleY
+	face := assets.ClockDateFont
+	gray := theme.DefaultTheme.ClockWidgetLocaleColor
+	drawer := font.Drawer{
+		Dst:  dst,
+		Src:  image.NewUniform(gray),
+		Face: face,
+		Dot:  fixed.P(x, y),
+	}
+	drawer.DrawString(location)
 }
