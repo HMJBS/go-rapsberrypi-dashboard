@@ -53,9 +53,10 @@ type appState struct {
 	photoFiles []string
 	lastScan   time.Time
 
-	weather    weather.Weather
-	weatherOK  bool
-	weatherErr string
+	weather     weather.Weather
+	weatherIcon image.Image
+	weatherOK   bool
+	weatherErr  string
 }
 
 // Run はダッシュボードアプリを起動し、ctx がキャンセルされるまで描画を継続します。
@@ -130,7 +131,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 				nextPhoto = now.Add(cfg.PhotoInterval)
 			}
 
-			render(frame, now)
+			render(frame, now, state)
 			if cfg.PreviewDir != "" {
 				if now.After(nextPreview) {
 					if err := previewpng.WriteLatestPNG(cfg.PreviewDir, frame); err != nil {
@@ -150,9 +151,16 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 
 func loadInitialWeatherCache(logger *log.Logger, cfg Config, state *appState) {
 	p := weather.CachePath(cfg.CacheDir)
-	if w, ok := weather.LoadCache(p); ok {
+	w, ok := weather.LoadCache(p)
+	wIcon, err := w.GetIcon(context.Background(), weather.Client{}, cfg.Latitude, cfg.Longitude, cfg.Timezone)
+	if err != nil {
+		logger.Printf("weather icon load failed: %v", err)
+	}
+
+	if ok && err == nil {
 		state.mu.Lock()
 		state.weather = w
+		state.weatherIcon = wIcon
 		state.weatherOK = true
 		state.mu.Unlock()
 		logger.Printf("loaded weather cache: temp=%.1f code=%d", w.TempC, w.Code)
@@ -182,15 +190,21 @@ func weatherLoop(ctx context.Context, logger *log.Logger, cfg Config, state *app
 }
 
 func updateWeather(ctx context.Context, logger *log.Logger, client weather.Client, cfg Config, state *appState, cachePath string) {
-	w, err := client.Fetch(ctx, cfg.Latitude, cfg.Longitude, cfg.Timezone)
+	w, err1 := client.Fetch(ctx, cfg.Latitude, cfg.Longitude, cfg.Timezone)
+	icon, err2 := w.GetIcon(ctx, client, cfg.Latitude, cfg.Longitude, cfg.Timezone)
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	if err != nil {
-		state.weatherErr = err.Error()
-		logger.Printf("weather fetch failed: %v", err)
+	if err1 != nil {
+		state.weatherErr = err1.Error()
+		logger.Printf("weather fetch failed: %v", err1)
+		return
+	} else if err2 != nil {
+		state.weatherErr = err2.Error()
+		logger.Printf("weather icon fetch failed: %v", err2)
 		return
 	}
 	state.weather = w
+	state.weatherIcon = icon
 	state.weatherOK = true
 	state.weatherErr = ""
 	if err := weather.SaveCache(cachePath, w); err != nil {
@@ -250,23 +264,25 @@ func changePhoto(logger *log.Logger, state *appState, sz image.Point) {
 	logger.Printf("photo changed: %s", pick)
 }
 
-func render(dst *image.RGBA, now time.Time) {
+func render(dst *image.RGBA, now time.Time, state *appState) {
 	gfx.FillRGBA(dst, theme.DefaultTheme.BackgroundColor)
 
-	// state.mu.RLock()
-	// // photo := state.photo
-	// // w := state.weather
-	// // wOK := state.weatherOK
-	// // wErr := state.weatherErr
-	// // pErr := state.photoErr
-	// state.mu.RUnlock()
+	state.mu.RLock()
+	// photo := state.photo
+	w := state.weather
+	wIcon := state.weatherIcon
+	wOK := state.weatherOK
+	wErr := state.weatherErr
+	// pErr := state.photoErr
+	state.mu.RUnlock()
 
 	// TODO: 画像ファイルを描画する
 
 	// オーバーレイを描画
 	gfx.DrawImage(dst, assets.Overlay, 0, 0)
 
-	// TODO: 天気情報を描画
+	widgets.DrawWeatherForecastWidget(dst, w, wIcon, wOK, wErr)
+
 	widgets.DrawClockWidget(dst, now)
 	// TODO: 時刻を描画
 }

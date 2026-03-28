@@ -4,6 +4,8 @@ package gfx
 import (
 	"image"
 	"image/color"
+
+	"golang.org/x/image/draw"
 )
 
 // FillRGBA は img 全体を単色で塗りつぶします。
@@ -64,17 +66,15 @@ func DrawImage(dst *image.RGBA, src image.Image, x, y int) {
 
 	srcStartX := srcBounds.Min.X + (drawRect.Min.X - x)
 	srcStartY := srcBounds.Min.Y + (drawRect.Min.Y - y)
-	drawWidth := drawRect.Dx()
+	draw.Draw(dst, drawRect, src, image.Pt(srcStartX, srcStartY), draw.Over)
+}
 
-	for dstY, srcY := drawRect.Min.Y, srcStartY; dstY < drawRect.Max.Y; dstY, srcY = dstY+1, srcY+1 {
-		rowStart := dst.PixOffset(drawRect.Min.X, dstY)
-		row := dst.Pix[rowStart : rowStart+drawWidth*4]
-		for i, srcX := 0, srcStartX; i < drawWidth; i, srcX = i+1, srcX+1 {
-			cr, cg, cb, ca := src.At(srcX, srcY).RGBA()
-			row[i*4+0] = uint8(cr >> 8)
-			row[i*4+1] = uint8(cg >> 8)
-			row[i*4+2] = uint8(cb >> 8)
-			row[i*4+3] = uint8(ca >> 8)
-		}
-	}
+// ScaleImage は src を scale 倍して返します。
+func ScaleImage(src image.Image, scale float64) image.Image {
+	srcBounds := src.Bounds()
+	dstWidth := int(float64(srcBounds.Dx()) * scale)
+	dstHeight := int(float64(srcBounds.Dy()) * scale)
+	dst := image.NewRGBA(image.Rect(0, 0, dstWidth, dstHeight))
+	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), src, srcBounds, draw.Over, nil)
+	return dst
 }

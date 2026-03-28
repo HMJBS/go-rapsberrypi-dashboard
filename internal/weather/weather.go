@@ -3,8 +3,10 @@ package weather
 
 import (
 	"context"
+	"dashboard/internal/assets"
 	"encoding/json"
 	"fmt"
+	"image"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,6 +20,12 @@ type Weather struct {
 	Code      int       `json:"code"`
 	Observed  time.Time `json:"observed"`
 	FetchedAt time.Time `json:"fetched_at"`
+}
+
+// dailyWeather は日出・日没時刻を保持します。
+type dailyWeather struct {
+	Sunrise time.Time `json:"sunrise"`
+	Sunset  time.Time `json:"sunset"`
 }
 
 // CachePath は weather キャッシュの保存先パスを返します。
@@ -150,6 +158,102 @@ func (c Client) Fetch(ctx context.Context, lat, lon float64, tz string) (Weather
 		Observed:  observed,
 		FetchedAt: time.Now(),
 	}, nil
+}
+
+func fetchDailyWeather(ctx context.Context, c Client, lat, lon float64, tz string) (dailyWeather, error) {
+	hc := c.HTTPClient
+	if hc == nil {
+		hc = defaultHTTPClient
+	}
+
+	q := url.Values{}
+	q.Set("latitude", fmt.Sprintf("%.6f", lat))
+	q.Set("longitude", fmt.Sprintf("%.6f", lon))
+	q.Set("daily", "sunrise,sunset")
+	q.Set("timezone", tz)
+
+	u := url.URL{Scheme: "https", Host: "api.open-meteo.com", Path: "/v1/forecast", RawQuery: q.Encode()}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return dailyWeather{}, fmt.Errorf("new request: %w", err)
+	}
+
+	resp, err := hc.Do(req)
+	if err != nil {
+		return dailyWeather{}, fmt.Errorf("request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode/100 != 2 {
+		return dailyWeather{}, fmt.Errorf("open-meteo status=%s", resp.Status)
+	}
+
+	var decoded struct {
+		Daily struct {
+			Sunrise []string `json:"sunrise"`
+			Sunset  []string `json:"sunset"`
+		} `json:"daily"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+		return dailyWeather{}, fmt.Errorf("decode: %w", err)
+	}
+
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	var w dailyWeather
+	if len(decoded.Daily.Sunrise) > 0 {
+		if t, err := time.ParseInLocation(time.RFC3339, decoded.Daily.Sunrise[0], loc); err == nil {
+			w.Sunrise = t
+		} else if t, err := time.ParseInLocation("2006-01-02T15:04", decoded.Daily.Sunrise[0], loc); err == nil {
+			w.Sunrise = t
+		}
+	}
+	if len(decoded.Daily.Sunset) > 0 {
+		if t, err := time.ParseInLocation(time.RFC3339, decoded.Daily.Sunset[0], loc); err == nil {
+			w.Sunset = t
+		} else if t, err := time.ParseInLocation("2006-01-02T15:04", decoded.Daily.Sunset[0], loc); err == nil {
+			w.Sunset = t
+		}
+	}
+
+	return w, nil
+}
+
+// GetIcon は天気コードに対応するアイコンを返します。
+func (w Weather) GetIcon(ctx context.Context, c Client, lat, lon float64, tz string) (img image.Image, err error) {
+
+	dailyWeather, err := fetchDailyWeather(ctx, c, lat, lon, tz)
+	if err != nil {
+		// 日出・日没の取得に失敗した場合は、空の128x128アイコンを返す
+		return image.NewRGBA(image.Rect(0, 0, 128, 128)), err
+	}
+
+	now := time.Now()
+	isDay := now.After(dailyWeather.Sunrise) && now.Before(dailyWeather.Sunset)
+	switch CodeLabel(w.Code) {
+	case "CLEAR":
+		if isDay {
+			return assets.WeatherIconSet.ClearDay, nil
+		}
+		return assets.WeatherIconSet.ClearNight, nil
+	case "CLOUDS":
+		return assets.WeatherIconSet.Cloud, nil
+	case "FOG":
+		return assets.WeatherIconSet.Fog, nil
+	case "DRIZZLE":
+		return assets.WeatherIconSet.Drizzle, nil
+	case "RAIN", "SHOWERS":
+		return assets.WeatherIconSet.Rain, nil
+	case "SNOW", "SNOWSHWR":
+		return assets.WeatherIconSet.Snow, nil
+	case "THUNDER":
+		return assets.WeatherIconSet.Thunder, nil
+	default:
+		return image.NewRGBA(image.Rect(0, 0, 128, 128)), nil
+	}
 }
 
 // CodeLabel は Open-Meteo の weather_code を簡易ラベルへ変換します。
