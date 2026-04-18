@@ -87,7 +87,7 @@ type TextDrawMode int
 // DrawText の描画モード定数です。
 const (
 	Normal      TextDrawMode = iota // Normal は、指定した座標をテキストの左下とする描画モードです。
-	Centralized                     // Centralized は、指定した座標をテキストの中央とする描画モードです。
+	Centralized                     // Centralized は、指定した座標をテキストの水平中央とする描画モードです。
 )
 
 // DrawText は img 上に text を描画します。
