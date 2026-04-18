@@ -204,21 +204,33 @@ func fetchDailyWeather(ctx context.Context, c Client, lat, lon float64, tz strin
 	}
 
 	var w dailyWeather
-	if len(decoded.Daily.Sunrise) > 0 {
-		if t, err := time.ParseInLocation(time.RFC3339, decoded.Daily.Sunrise[0], loc); err == nil {
-			w.Sunrise = t
-		} else if t, err := time.ParseInLocation("2006-01-02T15:04", decoded.Daily.Sunrise[0], loc); err == nil {
-			w.Sunrise = t
-		}
+
+	if len(decoded.Daily.Sunrise) == 0 {
+		return dailyWeather{}, fmt.Errorf("missing sunrise in response")
 	}
-	if len(decoded.Daily.Sunset) > 0 {
-		if t, err := time.ParseInLocation(time.RFC3339, decoded.Daily.Sunset[0], loc); err == nil {
-			w.Sunset = t
-		} else if t, err := time.ParseInLocation("2006-01-02T15:04", decoded.Daily.Sunset[0], loc); err == nil {
-			w.Sunset = t
-		}
+	if len(decoded.Daily.Sunset) == 0 {
+		return dailyWeather{}, fmt.Errorf("missing sunset in response")
 	}
 
+	sunriseStr := decoded.Daily.Sunrise[0]
+	sunriseTime, err := time.ParseInLocation(time.RFC3339, sunriseStr, loc)
+	if err != nil {
+		sunriseTime, err = time.ParseInLocation("2006-01-02T15:04", sunriseStr, loc)
+	}
+	if err != nil {
+		return dailyWeather{}, fmt.Errorf("parse sunrise: %w", err)
+	}
+	w.Sunrise = sunriseTime
+
+	sunsetStr := decoded.Daily.Sunset[0]
+	sunsetTime, err := time.ParseInLocation(time.RFC3339, sunsetStr, loc)
+	if err != nil {
+		sunsetTime, err = time.ParseInLocation("2006-01-02T15:04", sunsetStr, loc)
+	}
+	if err != nil {
+		return dailyWeather{}, fmt.Errorf("parse sunset: %w", err)
+	}
+	w.Sunset = sunsetTime
 	return w, nil
 }
 
