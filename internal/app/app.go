@@ -195,10 +195,14 @@ func updateWeather(ctx context.Context, logger *log.Logger, client weather.Clien
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	if err1 != nil {
+		state.weatherOK = false
+		state.weatherIcon = nil
 		state.weatherErr = err1.Error()
 		logger.Printf("weather fetch failed: %v", err1)
 		return
 	} else if err2 != nil {
+		state.weatherOK = false
+		state.weatherIcon = nil
 		state.weatherErr = err2.Error()
 		logger.Printf("weather icon fetch failed: %v", err2)
 		return
