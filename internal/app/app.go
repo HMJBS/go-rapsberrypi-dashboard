@@ -199,11 +199,13 @@ func updateWeather(ctx context.Context, logger *log.Logger, client weather.Clien
 		state.weatherIcon = nil
 		state.weatherErr = err1.Error()
 		logger.Printf("weather fetch failed: %v", err1)
+		state.weatherErr = err1.Error()
+		state.weatherOK = false
+		logger.Printf("weather fetch failed: %v", err1)
 		return
 	} else if err2 != nil {
-		state.weatherOK = false
-		state.weatherIcon = nil
 		state.weatherErr = err2.Error()
+		state.weatherOK = false
 		logger.Printf("weather icon fetch failed: %v", err2)
 		return
 	}
