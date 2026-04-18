@@ -119,8 +119,7 @@ func loadIcon(data []byte) image.Image {
 }
 
 func mustLoadWeatherIcons() WeatherIcons {
-	// ここでは、天気アイコンを読み込むコードを実装します。
-	// 例えば、アイコン画像を埋め込んでデコードするなどの方法があります。
+	// 埋め込まれた天気アイコンの PNG をデコードし、WeatherIcons 構造体として返します。
 	return WeatherIcons{
 		ClearDay:   loadIcon(clearDayIcon),
 		ClearNight: loadIcon(clearNightIcon),
