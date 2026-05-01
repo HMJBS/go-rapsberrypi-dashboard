@@ -98,9 +98,15 @@ func DrawImage(dst *image.RGBA, src image.Image, rect image.Rectangle, imageFit 
 		} else {
 			fitRect = image.Rect(0, 0, int(float64(rect.Dy())*srcAspect), rect.Dy())
 		}
-		fitRect = fitRect.Add(image.Pt(rect.Min.X+(rect.Dx()-fitRect.Dx())/2, rect.Min.Y+(rect.Dy()-fitRect.Dy())/2))
 		scaledSrc := ScaleImage(src, float64(fitRect.Dx())/float64(srcBounds.Dx()))
-		draw.Draw(dst, fitRect, scaledSrc, scaledSrc.Bounds().Min, draw.Over)
+		scaledBounds := scaledSrc.Bounds()
+		fitRect = image.Rect(
+			rect.Min.X+(rect.Dx()-scaledBounds.Dx())/2,
+			rect.Min.Y+(rect.Dy()-scaledBounds.Dy())/2,
+			rect.Min.X+(rect.Dx()-scaledBounds.Dx())/2+scaledBounds.Dx(),
+			rect.Min.Y+(rect.Dy()-scaledBounds.Dy())/2+scaledBounds.Dy(),
+		)
+		draw.Draw(dst, fitRect, scaledSrc, scaledBounds.Min, draw.Over)
 	default:
 		panic(fmt.Sprintf("unknown ImageFitMode %d", imageFit))
 	}
