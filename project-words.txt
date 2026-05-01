@@ -1,5 +1,13 @@
+bitfield
 Blit
+dbpp
 fbdev
+FBIOGET
+FSCREENINFO
+Meteo
 opentype
 previewpng
 rescan
+SNOWSHWR
+VSCREENINFO
+XRGB
