@@ -13,7 +13,7 @@ func TestDrawImageAlphaBlendsSource(t *testing.T) {
 	src := image.NewNRGBA(image.Rect(0, 0, 1, 1))
 	src.SetNRGBA(0, 0, color.NRGBA{R: 200, G: 100, B: 0, A: 128})
 
-	DrawImage(dst, src, 0, 0)
+	DrawImage(dst, src, image.Rect(0, 0, 1, 1), ImageFitNone)
 
 	got := dst.RGBAAt(0, 0)
 	want := color.RGBA{R: 105, G: 60, B: 14, A: 255}
@@ -29,7 +29,7 @@ func TestDrawImageKeepsDestinationForTransparentSource(t *testing.T) {
 	src := image.NewNRGBA(image.Rect(0, 0, 1, 1))
 	src.SetNRGBA(0, 0, color.NRGBA{R: 200, G: 100, B: 0, A: 0})
 
-	DrawImage(dst, src, 0, 0)
+	DrawImage(dst, src, image.Rect(0, 0, 1, 1), ImageFitNone)
 
 	got := dst.RGBAAt(0, 0)
 	want := color.RGBA{R: 10, G: 20, B: 30, A: 255}
@@ -47,7 +47,7 @@ func TestDrawImageRespectsDestinationOffset(t *testing.T) {
 	src.SetRGBA(0, 1, color.RGBA{R: 7, G: 8, B: 9, A: 255})
 	src.SetRGBA(1, 1, color.RGBA{R: 10, G: 11, B: 12, A: 255})
 
-	DrawImage(dst, src, 1, 1)
+	DrawImage(dst, src, image.Rect(1, 1, 3, 3), ImageFitNone)
 
 	if got := dst.RGBAAt(0, 0); got != (color.RGBA{}) {
 		t.Fatalf("RGBAAt(0, 0) = %#v, want zero", got)
@@ -76,7 +76,7 @@ func TestDrawImageClipsToDestinationBounds(t *testing.T) {
 		}
 	}
 
-	DrawImage(dst, src, 12, 22)
+	DrawImage(dst, src, image.Rect(12, 22, 15, 25), ImageFitNone)
 
 	if got := dst.RGBAAt(12, 22); got != (color.RGBA{R: 10, G: 20, B: 30, A: 255}) {
 		t.Fatalf("RGBAAt(12, 22) = %#v", got)

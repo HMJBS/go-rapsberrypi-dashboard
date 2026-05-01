@@ -16,11 +16,13 @@ type Theme struct {
 	ClockWidgetLocaleX         int
 	ClockWidgetLocaleY         int
 	ClockWidgetLocaleColor     color.RGBA
+	WeatherForecastIconX       int
+	WeatherForecastIconY       int
 }
 
 // DefaultTheme は既定のテーマ
 var DefaultTheme = Theme{
-	BackgroundColor:            color.RGBA{R: 241, G: 245, B: 249, A: 255},
+	BackgroundColor:            color.RGBA{R: 201, G: 201, B: 201, A: 255},
 	ClockWidgetBackgroundColor: color.RGBA{R: 255, G: 255, B: 255, A: 255},
 	ClockWidgetDateX:           880,
 	ClockWidgetDateY:           202,
@@ -31,4 +33,6 @@ var DefaultTheme = Theme{
 	ClockWidgetLocaleX:         880,
 	ClockWidgetLocaleY:         330,
 	ClockWidgetLocaleColor:     color.RGBA{R: 100, G: 116, B: 139, A: 255},
+	WeatherForecastIconX:       930,
+	WeatherForecastIconY:       530,
 }

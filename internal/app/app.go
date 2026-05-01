@@ -94,7 +94,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 	go weatherLoop(ctx, logger, cfg, state)
 
 	rescanPhotos(logger, cfg, state)
-	changePhoto(logger, state, sz)
+	changePhoto(logger, state)
 
 	loc := time.Local
 	if cfg.Timezone != "" {
@@ -127,7 +127,7 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 				nextScan = now.Add(cfg.RescanInterval)
 			}
 			if cfg.PhotoInterval > 0 && now.After(nextPhoto) {
-				changePhoto(logger, state, sz)
+				changePhoto(logger, state)
 				nextPhoto = now.Add(cfg.PhotoInterval)
 			}
 
@@ -238,7 +238,7 @@ func rescanPhotos(logger *log.Logger, cfg Config, state *appState) {
 	}
 }
 
-func changePhoto(logger *log.Logger, state *appState, sz image.Point) {
+func changePhoto(logger *log.Logger, state *appState) {
 	state.mu.RLock()
 	files := append([]string(nil), state.photoFiles...)
 	prev := state.photoPath
@@ -255,7 +255,7 @@ func changePhoto(logger *log.Logger, state *appState, sz image.Point) {
 		}
 	}
 
-	img, err := photos.LoadScreenImage(pick, sz.X, sz.Y, theme.DefaultTheme.BackgroundColor)
+	img, err := photos.LoadScreenImage(pick)
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	state.photoAt = time.Now()
@@ -282,13 +282,12 @@ func render(dst *image.RGBA, now time.Time, state *appState) {
 	// pErr := state.photoErr
 	state.mu.RUnlock()
 
-	// TODO: 画像ファイルを描画する
+	widgets.DrawPhotoViewerWidget(dst, state.photo, state.photoErr)
 
 	// オーバーレイを描画
-	gfx.DrawImage(dst, assets.Overlay, 0, 0)
+	gfx.DrawImage(dst, assets.Overlay, image.Rect(0, 0, 1280, 1024), gfx.ImageFitNone)
 
 	widgets.DrawWeatherForecastWidget(dst, w, wIcon, wOK, wErr)
 
 	widgets.DrawClockWidget(dst, now)
-	// TODO: 時刻を描画
 }

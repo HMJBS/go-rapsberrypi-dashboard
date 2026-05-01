@@ -1,5 +1,6 @@
 bitfield
 Blit
+centerize
 dbpp
 fbdev
 FBIOGET
