@@ -285,7 +285,7 @@ func render(dst *image.RGBA, now time.Time, state *appState) {
 	widgets.DrawPhotoViewerWidget(dst, state.photo, state.photoErr)
 
 	// オーバーレイを描画
-	gfx.DrawImage(dst, assets.Overlay, image.Rect(0, 0, 1280, 1024), gfx.ImageFitNone)
+	gfx.DrawImage(dst, assets.Overlay, assets.Overlay.Bounds(), gfx.ImageFitNone)
 
 	widgets.DrawWeatherForecastWidget(dst, w, wIcon, wOK, wErr)
 

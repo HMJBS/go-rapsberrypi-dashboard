@@ -32,8 +32,7 @@ func ListImages(dir string) ([]string, error) {
 	return out, nil
 }
 
-// LoadScreenImage decodes path, scales it to fit within (screenW, screenH) while
-// preserving aspect ratio, and composites it centered on a screen-sized RGBA filled with bg.
+// LoadScreenImage は、path で指定された画像を読み込み、画面表示用に RGBA 形式で返します。
 func LoadScreenImage(path string) (*image.RGBA, error) {
 	f, err := os.Open(path)
 	if err != nil {

@@ -18,6 +18,10 @@ type Theme struct {
 	ClockWidgetLocaleColor     color.RGBA
 	WeatherForecastIconX       int
 	WeatherForecastIconY       int
+	PhotoViewerAreaOriginX     int
+	PhotoViewerAreaOriginY     int
+	PhotoViewerAreaEndX        int
+	PhotoViewerAreaEndY        int
 }
 
 // DefaultTheme は既定のテーマ
@@ -35,4 +39,8 @@ var DefaultTheme = Theme{
 	ClockWidgetLocaleColor:     color.RGBA{R: 100, G: 116, B: 139, A: 255},
 	WeatherForecastIconX:       930,
 	WeatherForecastIconY:       530,
+	PhotoViewerAreaOriginX:     51,
+	PhotoViewerAreaOriginY:     51,
+	PhotoViewerAreaEndX:        805,
+	PhotoViewerAreaEndY:        973,
 }
