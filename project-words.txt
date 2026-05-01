@@ -8,5 +8,6 @@ Meteo
 opentype
 previewpng
 rescan
+SNOWSHWR
 VSCREENINFO
 XRGB

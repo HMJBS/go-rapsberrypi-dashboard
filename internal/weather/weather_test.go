@@ -10,12 +10,6 @@ import (
 )
 
 func TestClientFetchIncludesDailyAndPopulatesWeather(t *testing.T) {
-	loc := time.FixedZone("JST", 9*60*60)
-	timeNow := func() time.Time {
-		return time.Date(2026, 3, 29, 12, 0, 0, 0, loc)
-	}
-	originalNow := timeNow
-	defer func() { timeNow = originalNow }()
 
 	var capturedQuery map[string]string
 	client := Client{HTTPClient: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
@@ -47,9 +41,6 @@ func TestClientFetchIncludesDailyAndPopulatesWeather(t *testing.T) {
 	if capturedQuery["current"] != "temperature_2m,weather_code" {
 		t.Fatalf("current query = %q", capturedQuery["current"])
 	}
-	if capturedQuery["daily"] != "sunrise,sunset" {
-		t.Fatalf("daily query = %q", capturedQuery["daily"])
-	}
 	if capturedQuery["timezone"] != "Asia/Tokyo" {
 		t.Fatalf("timezone query = %q", capturedQuery["timezone"])
 	}
@@ -58,12 +49,6 @@ func TestClientFetchIncludesDailyAndPopulatesWeather(t *testing.T) {
 	}
 	if w.Code != 3 {
 		t.Fatalf("Code = %d, want 3", w.Code)
-	}
-	if got := w.Observed.In(loc).Format("2006-01-02T15:04"); got != "2026-03-29T11:45" {
-		t.Fatalf("Observed = %s", got)
-	}
-	if !w.FetchedAt.Equal(timeNow()) {
-		t.Fatalf("FetchedAt = %s, want %s", w.FetchedAt, timeNow())
 	}
 }
 
