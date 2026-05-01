@@ -20,51 +20,51 @@ type bitfield struct {
 	MsbRight uint32
 }
 
-type varScreeninfo struct {
-	Xres         uint32
-	Yres         uint32
-	XresVirtual  uint32
-	YresVirtual  uint32
-	Xoffset      uint32
-	Yoffset      uint32
+type varScreenInfo struct {
+	XRes         uint32
+	YRes         uint32
+	XResVirtual  uint32
+	YResVirtual  uint32
+	XOffset      uint32
+	YOffset      uint32
 	BitsPerPixel uint32
-	Grayscale    uint32
+	GrayScale    uint32
 	Red          bitfield
 	Green        bitfield
 	Blue         bitfield
 	Transp       bitfield
-	Nonstd       uint32
+	NonStd       uint32
 	Activate     uint32
 	Height       uint32
 	Width        uint32
 	AccelFlags   uint32
-	Pixclock     uint32
+	PixClock     uint32
 	LeftMargin   uint32
 	RightMargin  uint32
 	UpperMargin  uint32
 	LowerMargin  uint32
-	HsyncLen     uint32
-	VsyncLen     uint32
+	HSyncLen     uint32
+	VSyncLen     uint32
 	Sync         uint32
-	Vmode        uint32
+	VMode        uint32
 	Rotate       uint32
-	Colorspace   uint32
+	ColorSpace   uint32
 	Reserved     [4]uint32
 }
 
-type fixScreeninfo struct {
+type fixScreenInfo struct {
 	ID           [16]byte
-	SmemStart    uintptr
-	SmemLen      uint32
+	SMemStart    uintptr
+	SMemLen      uint32
 	Type         uint32
 	TypeAux      uint32
 	Visual       uint32
-	XpanStep     uint16
-	YpanStep     uint16
-	YwrapStep    uint16
+	XPanStep     uint16
+	YPanStep     uint16
+	YWrapStep    uint16
 	LineLength   uint32
-	MmioStart    uintptr
-	MmioLen      uint32
+	MMioStart    uintptr
+	MMioLen      uint32
 	Accel        uint32
 	Capabilities uint16
 	Reserved     [2]uint16
@@ -107,11 +107,11 @@ func Open(path string) (*Framebuffer, error) {
 		}
 	}()
 
-	var v varScreeninfo
+	var v varScreenInfo
 	if err := ioctl(f.Fd(), fbIOGetVScreenInfo, unsafe.Pointer(&v)); err != nil {
 		return nil, fmt.Errorf("ioctl FBIOGET_VSCREENINFO: %w", err)
 	}
-	var fx fixScreeninfo
+	var fx fixScreenInfo
 	if err := ioctl(f.Fd(), fbIOGetFScreenInfo, unsafe.Pointer(&fx)); err != nil {
 		return nil, fmt.Errorf("ioctl FBIOGET_FSCREENINFO: %w", err)
 	}
@@ -126,8 +126,8 @@ func Open(path string) (*Framebuffer, error) {
 
 	bytesPP := bpp / 8
 	lineLength := int(fx.LineLength)
-	width := int(v.Xres)
-	height := int(v.Yres)
+	width := int(v.XRes)
+	height := int(v.YRes)
 
 	// Require byte-aligned 8-bit channels.
 	if v.Red.Length != 8 || v.Green.Length != 8 || v.Blue.Length != 8 {
@@ -166,7 +166,7 @@ func Open(path string) (*Framebuffer, error) {
 		return nil, fmt.Errorf("unexpected line_length=%d for width=%d bytesPP=%d", lineLength, width, bytesPP)
 	}
 
-	mem, err := syscall.Mmap(int(f.Fd()), 0, int(fx.SmemLen), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
+	mem, err := syscall.Mmap(int(f.Fd()), 0, int(fx.SMemLen), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 	if err != nil {
 		return nil, fmt.Errorf("mmap framebuffer: %w", err)
 	}

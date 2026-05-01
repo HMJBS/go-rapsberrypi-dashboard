@@ -9,7 +9,8 @@
     },
     "gopls": {
         "ui.semanticTokens": true,
-        "staticcheck": true
+        "ui.diagnostic.staticcheck": false,
+        "ui.diagnostic.diagnosticsTrigger": "Save"
     },
     "makefile.configureOnOpen": false
 }

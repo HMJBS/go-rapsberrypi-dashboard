@@ -86,8 +86,13 @@ make build
 [/.vscode/settings.json](../.vscode/settings.json) に設定があります。
 
 - 保存時フォーマット: `goimports`（import 整理含む）
-- 保存時 lint: `golangci-lint`（workspace モード）
-- Language Server: `gopls`（`staticcheck` 有効）
+- 保存時 lint: `golangci-lint`（package モード）
+- Language Server: `gopls`（標準の診断のみ。`staticcheck` は無効）
+
+補足:
+
+- VS Code の Go 拡張がワークスペース外の依存や標準ライブラリまで Problems に出すのを避けるため、`gopls` の `staticcheck` は有効化していません。
+- その代わり、ワークスペース内の静的解析は保存時の `golangci-lint` で常時実行する構成にしています。
 
 推奨拡張は [/.vscode/extensions.json](../.vscode/extensions.json) に定義しています。
 
