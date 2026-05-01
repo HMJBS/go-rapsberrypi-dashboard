@@ -3,6 +3,7 @@
     "go.lintTool": "golangci-lint-v2",
     "go.lintOnSave": "package",
     "go.formatTool": "goimports",
+    "go.diagnostic.vulncheck": "Imports",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
@@ -10,7 +11,10 @@
     "gopls": {
         "ui.semanticTokens": true,
         "ui.diagnostic.staticcheck": false,
-        "ui.diagnostic.diagnosticsTrigger": "Save"
+        "ui.diagnostic.diagnosticsTrigger": "Save",
+        "ui.codelenses": {
+            "run_govulncheck": true
+        }
     },
     "makefile.configureOnOpen": false
 }

@@ -1,5 +1,5 @@
 [tools]
-go = "1.26.1"
+go = "1.26.2"
 
 # Optional but recommended for consistent linting across machines/CI.
 golangci-lint = "2.11.1"
