@@ -2,6 +2,7 @@
 package gfx
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 
@@ -58,17 +59,53 @@ func RectRGBA(img *image.RGBA, x0, y0, x1, y1 int, c color.RGBA) {
 	}
 }
 
-// DrawImage は img 上に src を描画します。
-func DrawImage(dst *image.RGBA, src image.Image, x, y int) {
-	srcBounds := src.Bounds()
-	drawRect := image.Rect(x, y, x+srcBounds.Dx(), y+srcBounds.Dy()).Intersect(dst.Bounds())
-	if drawRect.Empty() {
-		return
-	}
+// ImageFitMode は DrawImage の画像フィットモードを表します。
+type ImageFitMode int
 
-	srcStartX := srcBounds.Min.X + (drawRect.Min.X - x)
-	srcStartY := srcBounds.Min.Y + (drawRect.Min.Y - y)
-	draw.Draw(dst, drawRect, src, image.Pt(srcStartX, srcStartY), draw.Over)
+const (
+	// ImageFitNone は、src を dst にフィットさせずに描画するモードです。rect の左上を src の左上に合わせて描画されます。
+	ImageFitNone ImageFitMode = iota
+	// ImageFitContain は、src を dst にフィットさせて描画するモードです。アスペクト比は維持されます。
+	ImageFitContain
+)
+
+// DrawImage は img 上に src を描画します。
+func DrawImage(dst *image.RGBA, src image.Image, rect image.Rectangle, imageFit ImageFitMode) {
+
+	switch imageFit {
+	case ImageFitNone:
+		srcBounds := src.Bounds()
+		drawRect := rect.Intersect(dst.Bounds())
+		if drawRect.Empty() {
+			return
+		}
+
+		srcStartX := srcBounds.Min.X + (drawRect.Min.X - rect.Min.X)
+		srcStartY := srcBounds.Min.Y + (drawRect.Min.Y - rect.Min.Y)
+		draw.Draw(dst, drawRect, src, image.Pt(srcStartX, srcStartY), draw.Over)
+	case ImageFitContain:
+		srcBounds := src.Bounds()
+		srcAspect := float64(srcBounds.Dx()) / float64(srcBounds.Dy())
+		dstAspect := float64(rect.Dx()) / float64(rect.Dy())
+
+		var fitRect image.Rectangle
+		if srcAspect > dstAspect {
+			fitRect = image.Rect(0, 0, rect.Dx(), int(float64(rect.Dx())/srcAspect))
+		} else {
+			fitRect = image.Rect(0, 0, int(float64(rect.Dy())*srcAspect), rect.Dy())
+		}
+		scaledSrc := ScaleImage(src, float64(fitRect.Dx())/float64(srcBounds.Dx()))
+		scaledBounds := scaledSrc.Bounds()
+		fitRect = image.Rect(
+			rect.Min.X+(rect.Dx()-scaledBounds.Dx())/2,
+			rect.Min.Y+(rect.Dy()-scaledBounds.Dy())/2,
+			rect.Min.X+(rect.Dx()-scaledBounds.Dx())/2+scaledBounds.Dx(),
+			rect.Min.Y+(rect.Dy()-scaledBounds.Dy())/2+scaledBounds.Dy(),
+		)
+		draw.Draw(dst, fitRect, scaledSrc, scaledBounds.Min, draw.Over)
+	default:
+		panic(fmt.Sprintf("unknown ImageFitMode %d", imageFit))
+	}
 }
 
 // ScaleImage は src を scale 倍して返します。

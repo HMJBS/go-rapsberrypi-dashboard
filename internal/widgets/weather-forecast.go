@@ -24,8 +24,17 @@ func DrawWeatherForecastWidget(dst *image.RGBA, forecast weather.Weather, icon i
 
 func drawIcon(dst *image.RGBA, icon image.Image) {
 
-	scaledIcon := gfx.ScaleImage(icon, 1.5)
-	gfx.DrawImage(dst, scaledIcon, 930, 530)
+	const scale = 1.5
+	scaledIcon := gfx.ScaleImage(icon, scale)
+	iconWidth := icon.Bounds().Dx()
+	iconHeight := icon.Bounds().Dy()
+	scaledIconWidth := int(float64(iconWidth) * scale)
+	scaledIconHeight := int(float64(iconHeight) * scale)
+	gfx.DrawImage(dst, scaledIcon, image.Rect(
+		theme.DefaultTheme.WeatherForecastIconX, theme.DefaultTheme.WeatherForecastIconY,
+		theme.DefaultTheme.WeatherForecastIconX+scaledIconWidth, theme.DefaultTheme.WeatherForecastIconY+scaledIconHeight),
+		gfx.ImageFitNone,
+	)
 }
 
 func drawErrorText(dst *image.RGBA, err string) {
