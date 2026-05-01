@@ -67,10 +67,6 @@ const (
 	ImageFitNone ImageFitMode = iota
 	// ImageFitContain は、src を dst にフィットさせて描画するモードです。アスペクト比は維持されます。
 	ImageFitContain
-	// ImageFitCover は、src を dst にフィットさせて描画するモードです。アスペクト比は維持されますが、dst を完全に覆うように描画されます。
-	ImageFitCover
-	// ImageFitFill は、src を dst にフィットさせて描画するモードです。アスペクト比は維持されません。
-	ImageFitFill
 )
 
 // DrawImage は img 上に src を描画します。
