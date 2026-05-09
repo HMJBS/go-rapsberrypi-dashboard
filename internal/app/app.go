@@ -162,16 +162,20 @@ func loadInitialWeatherCache(logger *log.Logger, cfg Config, state *appState) {
 	}
 
 	state.mu.Lock()
-	state.weather = w
-	state.weatherIcon = wIcon
-	state.weatherOK = true
 	if err != nil {
 		state.weatherErr = err.Error()
+		state.weather = w
+		state.weatherIcon = nil
+		state.weatherOK = false
+		logger.Printf("loaded weather cache with icon error: temp=%.1f code=%d err=%v", w.TempC, w.Code, err)
 	} else {
 		state.weatherErr = ""
+		state.weather = w
+		state.weatherIcon = wIcon
+		state.weatherOK = true
+		logger.Printf("loaded weather cache: temp=%.1f code=%d", w.TempC, w.Code)
 	}
 	state.mu.Unlock()
-	logger.Printf("loaded weather cache: temp=%.1f code=%d", w.TempC, w.Code)
 }
 
 func weatherLoop(ctx context.Context, logger *log.Logger, cfg Config, state *appState) {
@@ -209,7 +213,11 @@ func updateWeather(ctx context.Context, logger *log.Logger, client weather.Clien
 		return
 	}
 	if err2 != nil {
+		state.weatherOK = false
+		state.weatherIcon = nil
+		state.weatherErr = err2.Error()
 		logger.Printf("weather icon fetch failed: %v", err2)
+		return
 	}
 	state.weather = w
 	state.weatherIcon = icon
