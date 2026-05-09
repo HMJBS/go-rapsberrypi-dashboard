@@ -152,19 +152,30 @@ func Run(ctx context.Context, logger *log.Logger, cfg Config) error {
 func loadInitialWeatherCache(logger *log.Logger, cfg Config, state *appState) {
 	p := weather.CachePath(cfg.CacheDir)
 	w, ok := weather.LoadCache(p)
+	if !ok {
+		return
+	}
+
 	wIcon, err := w.GetIcon(context.Background(), weather.Client{}, cfg.Latitude, cfg.Longitude, cfg.Timezone)
 	if err != nil {
 		logger.Printf("weather icon load failed: %v", err)
 	}
 
-	if ok && err == nil {
-		state.mu.Lock()
+	state.mu.Lock()
+	if err != nil {
+		state.weatherErr = err.Error()
+		state.weather = w
+		state.weatherIcon = nil
+		state.weatherOK = false
+		logger.Printf("loaded weather cache with icon error: temp=%.1f code=%d err=%v", w.TempC, w.Code, err)
+	} else {
+		state.weatherErr = ""
 		state.weather = w
 		state.weatherIcon = wIcon
 		state.weatherOK = true
-		state.mu.Unlock()
 		logger.Printf("loaded weather cache: temp=%.1f code=%d", w.TempC, w.Code)
 	}
+	state.mu.Unlock()
 }
 
 func weatherLoop(ctx context.Context, logger *log.Logger, cfg Config, state *appState) {
@@ -199,13 +210,12 @@ func updateWeather(ctx context.Context, logger *log.Logger, client weather.Clien
 		state.weatherIcon = nil
 		state.weatherErr = err1.Error()
 		logger.Printf("weather fetch failed: %v", err1)
-		state.weatherErr = err1.Error()
-		state.weatherOK = false
-		logger.Printf("weather fetch failed: %v", err1)
 		return
-	} else if err2 != nil {
-		state.weatherErr = err2.Error()
+	}
+	if err2 != nil {
 		state.weatherOK = false
+		state.weatherIcon = nil
+		state.weatherErr = err2.Error()
 		logger.Printf("weather icon fetch failed: %v", err2)
 		return
 	}
@@ -274,15 +284,15 @@ func render(dst *image.RGBA, now time.Time, state *appState) {
 	gfx.FillRGBA(dst, theme.DefaultTheme.BackgroundColor)
 
 	state.mu.RLock()
-	// photo := state.photo
+	photo := state.photo
+	pErr := state.photoErr
 	w := state.weather
 	wIcon := state.weatherIcon
 	wOK := state.weatherOK
 	wErr := state.weatherErr
-	// pErr := state.photoErr
 	state.mu.RUnlock()
 
-	widgets.DrawPhotoViewerWidget(dst, state.photo, state.photoErr)
+	widgets.DrawPhotoViewerWidget(dst, photo, pErr)
 
 	// オーバーレイを描画
 	gfx.DrawImage(dst, assets.Overlay, assets.Overlay.Bounds(), gfx.ImageFitNone)

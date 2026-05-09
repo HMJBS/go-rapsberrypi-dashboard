@@ -6,6 +6,28 @@ import (
 	"testing"
 )
 
+func TestDrawImageIgnoresTypedNilImage(t *testing.T) {
+	dst := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	dst.SetRGBA(0, 0, color.RGBA{R: 10, G: 20, B: 30, A: 255})
+
+	var src *image.RGBA
+	DrawImage(dst, src, image.Rect(0, 0, 1, 1), ImageFitNone)
+
+	got := dst.RGBAAt(0, 0)
+	want := color.RGBA{R: 10, G: 20, B: 30, A: 255}
+	if got != want {
+		t.Fatalf("RGBAAt(0, 0) = %#v, want %#v", got, want)
+	}
+}
+
+func TestScaleImageReturnsEmptyImageForTypedNil(t *testing.T) {
+	var src *image.RGBA
+	scaled := ScaleImage(src, 1.5)
+	if !scaled.Bounds().Empty() {
+		t.Fatalf("scaled bounds = %v, want empty", scaled.Bounds())
+	}
+}
+
 func TestDrawImageAlphaBlendsSource(t *testing.T) {
 	dst := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	dst.SetRGBA(0, 0, color.RGBA{R: 10, G: 20, B: 30, A: 255})

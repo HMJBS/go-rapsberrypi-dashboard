@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"reflect"
 
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
@@ -71,6 +72,9 @@ const (
 
 // DrawImage は img 上に src を描画します。
 func DrawImage(dst *image.RGBA, src image.Image, rect image.Rectangle, imageFit ImageFitMode) {
+	if dst == nil || isNilImage(src) || rect.Empty() {
+		return
+	}
 
 	switch imageFit {
 	case ImageFitNone:
@@ -110,12 +114,35 @@ func DrawImage(dst *image.RGBA, src image.Image, rect image.Rectangle, imageFit 
 
 // ScaleImage は src を scale 倍して返します。
 func ScaleImage(src image.Image, scale float64) image.Image {
+	if isNilImage(src) || scale <= 0 {
+		return image.NewRGBA(image.Rect(0, 0, 0, 0))
+	}
+
 	srcBounds := src.Bounds()
+	if srcBounds.Empty() {
+		return image.NewRGBA(image.Rect(0, 0, 0, 0))
+	}
 	dstWidth := int(float64(srcBounds.Dx()) * scale)
 	dstHeight := int(float64(srcBounds.Dy()) * scale)
+	if dstWidth <= 0 || dstHeight <= 0 {
+		return image.NewRGBA(image.Rect(0, 0, 0, 0))
+	}
 	dst := image.NewRGBA(image.Rect(0, 0, dstWidth, dstHeight))
 	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), src, srcBounds, draw.Over, nil)
 	return dst
+}
+
+func isNilImage(src image.Image) bool {
+	if src == nil {
+		return true
+	}
+	v := reflect.ValueOf(src)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return v.IsNil()
+	default:
+		return false
+	}
 }
 
 // TextDrawMode は DrawText の描画モードを表します。
