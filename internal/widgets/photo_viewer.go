@@ -7,7 +7,7 @@ import (
 )
 
 // DrawPhotoViewerWidget は、写真表示ウィジェットを描画します。
-func DrawPhotoViewerWidget(dst *image.RGBA, photo image.Image, pErr string) {
+func DrawPhotoViewerWidget(dst *image.RGBA, photo *image.RGBA, pErr string) {
 
 	if photo != nil {
 		rect := image.Rect(
