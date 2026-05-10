@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
 
 	"dashboard/internal/app"
@@ -58,6 +59,28 @@ func main() {
 		PhotoInterval:   resolved.PhotoInterval,
 		RescanInterval:  resolved.RescanInterval,
 		WeatherInterval: resolved.WeatherInterval,
+		CPUProfile:      resolved.CPUProfile,
+	}
+
+	// enable profiling if requested
+	if cfg.CPUProfile != "" {
+		f, err := os.Create(cfg.CPUProfile)
+		if err != nil {
+			closeErr := f.Close()
+			if closeErr != nil {
+				logger.Printf("Cannot close cpu profile file: %v", closeErr)
+			}
+			logger.Fatalf("cannot create cpu profile file: %v", err)
+		}
+		defer func() {
+			if err = f.Close(); err != nil {
+				logger.Printf("Cannot close cpu profile file: %v", err)
+			}
+		}()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			logger.Fatalf("start cpu profile: %v", err)
+		}
+		defer pprof.StopCPUProfile()
 	}
 
 	if err := app.Run(ctx, logger, cfg); err != nil {
@@ -71,6 +94,7 @@ func main() {
 		}
 		logger.Fatalf("fatal: %v", err)
 	}
+	fmt.Println("dashboard stopped gracefully")
 }
 
 // parseFlags はコマンドラインフラグを解釈し、設定値と補助情報を返します。
@@ -96,6 +120,7 @@ func parseFlags() (config.Values, bool, string, bool, map[string]bool) {
 	flag.DurationVar(&defaults.PreviewEvery, "preview_every", defaults.PreviewEvery, "interval for updating latest.png when preview_dir is set")
 	flag.IntVar(&defaults.ScreenWidth, "screen_w", defaults.ScreenWidth, "screen width for preview mode")
 	flag.IntVar(&defaults.ScreenHeight, "screen_h", defaults.ScreenHeight, "screen height for preview mode")
+	flag.StringVar(&defaults.CPUProfile, "cpu_profile", defaults.CPUProfile, "write cpu profile to `file`")
 	flag.Parse()
 
 	visited := map[string]bool{}

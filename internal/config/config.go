@@ -30,6 +30,7 @@ type Values struct {
 	PreviewEvery    time.Duration
 	ScreenWidth     int
 	ScreenHeight    int
+	CPUProfile      string
 }
 
 type fileValues struct {
@@ -45,6 +46,7 @@ type fileValues struct {
 	PreviewEveryMS             *int64   `json:"preview_every_ms"`
 	ScreenWidth                *int     `json:"screen_w"`
 	ScreenHeight               *int     `json:"screen_h"`
+	CPUProfile                 *string  `json:"cpu_profile"`
 }
 
 // DefaultDataRoot は既定のデータディレクトリのベースパスを返します。
@@ -71,6 +73,7 @@ func DefaultValues(dataRoot string) Values {
 		PreviewEvery:    10 * time.Second,
 		ScreenWidth:     1280,
 		ScreenHeight:    1024,
+		CPUProfile:      "",
 	}
 }
 
@@ -136,6 +139,9 @@ func ApplyJSONFile(current Values, path string, required bool) (Values, error) {
 	if cfg.ScreenHeight != nil {
 		current.ScreenHeight = *cfg.ScreenHeight
 	}
+	if cfg.CPUProfile != nil {
+		current.CPUProfile = *cfg.CPUProfile
+	}
 
 	return current, nil
 }
@@ -181,6 +187,10 @@ func ApplyFlagOverrides(current, flags Values, visited map[string]bool) Values {
 	if visited["screen_h"] {
 		current.ScreenHeight = flags.ScreenHeight
 	}
+	if visited["cpu_profile"] {
+		current.CPUProfile = flags.CPUProfile
+	}
+
 	return current
 }
 

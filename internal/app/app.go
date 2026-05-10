@@ -40,6 +40,8 @@ type Config struct {
 	PhotoInterval   time.Duration
 	RescanInterval  time.Duration
 	WeatherInterval time.Duration
+
+	CPUProfile string
 }
 
 type appState struct {
