@@ -66,11 +66,15 @@ func main() {
 	if cfg.CPUProfile != "" {
 		f, err := os.Create(cfg.CPUProfile)
 		if err != nil {
-			logger.Fatalf("create cpu profile file: %v", err)
+			closeErr := f.Close()
+			if closeErr != nil {
+				logger.Printf("Cannot close cpu profile file: %v", closeErr)
+			}
+			logger.Fatalf("cannot create cpu profile file: %v", err)
 		}
 		defer func() {
 			if err = f.Close(); err != nil {
-				logger.Printf("close cpu profile file: %v", err)
+				logger.Printf("Cannot close cpu profile file: %v", err)
 			}
 		}()
 		if err := pprof.StartCPUProfile(f); err != nil {
